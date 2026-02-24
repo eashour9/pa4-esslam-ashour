@@ -12,15 +12,20 @@ main = do
   contents <- readFile "data/ishmael.dec"
   let msg = filter (/= '\n') contents
   let result = segment entropyMap msg
-  putStr (wrap 60 result)
+  writeFile "data/ishmael.seg" (wrap 60 result)
 
 parseEntropyFile :: String -> M.Map String Double
 parseEntropyFile contents =
   M.fromAscList [(w, read e) | [w, e] <- map words (lines contents)]
 
 wrap :: Int -> String -> String
-wrap _ [] = []
-wrap n s = take n s ++ "\n" ++ wrap n (drop n s)
+wrap n = unlines . map unwords . go 0 [] . words
+  where
+    go _ line [] = [reverse line]
+    go len line (w : ws)
+      | len == 0 = go (length w) [w] ws
+      | len + 1 + length w > n = reverse line : go (length w) [w] ws
+      | otherwise = go (len + 1 + length w) (w : line) ws
 
 segment dict msg = unwords (traceBack 0)
   where
